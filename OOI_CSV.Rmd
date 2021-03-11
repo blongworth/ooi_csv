@@ -1,13 +1,15 @@
 ---
 title: "OOI Alfresco data API example"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
 ---
 
 This notebook shows how to access CSV data from https://alfresco.oceanobservatories.org/ using R. 
 
 This is a translation of the python method below:
 
-```{python, eval = FALSE}
+```{}
 discrete_URL = ('https://alfresco.oceanobservatories.org/alfresco/webdav/OOI/'
                 'Coastal%20Endurance%20Array/Cruise%20Data/Endurance-13_TN380_2020-07/'
                 'Ship_Data/Water%20Sampling/Endurance-13_TN380_Discrete_Summary.csv')
@@ -50,7 +52,7 @@ headers(req)
 content(req)
 ```
 
-Store the csv content in a data frame, select a cast and plot a profile! R is not a fan of verbose column names with spaces and punctuation, so we have to rename before plotting.
+Store the csv content in a data frame, select a cast and plot a profile! R is not a fan of verbose column names with spaces and punctuation, so we have to rename before plotting. It also looks like these are duplicate discrete analyses. There's no field for which replicate, so maybe separate by position?
 
 ```{r}
 df <- content(req)
