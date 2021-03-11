@@ -1,0 +1,67 @@
+---
+title: "OOI Alfresco data API example"
+output: html_notebook
+---
+
+This notebook shows how to access CSV data from https://alfresco.oceanobservatories.org/ using R. 
+
+This is a translation of the python method below:
+
+```{python, eval = FALSE}
+discrete_URL = ('https://alfresco.oceanobservatories.org/alfresco/webdav/OOI/'
+                'Coastal%20Endurance%20Array/Cruise%20Data/Endurance-13_TN380_2020-07/'
+                'Ship_Data/Water%20Sampling/Endurance-13_TN380_Discrete_Summary.csv')
+r = requests.get(discrete_URL, auth=('guest', 'guest'))
+times = ['Start Time [UTC]', 'CTD Bottle Closure Time [UTC]']
+discrete = pd.read_csv(io.StringIO(r.content.decode('utf-8')), parse_dates=times)
+discrete[96:]
+```
+
+We'll use {httr} for sending the request and recieving data, dplyr for munging, and ggplot2 for plotting.
+
+```{r}
+library(tidyverse)
+library(httr)
+```
+
+Set the URL of interest.
+
+```{r}
+url <- 'https://alfresco.oceanobservatories.org/alfresco/webdav/OOI/Coastal%20Endurance%20Array/Cruise%20Data/Endurance-13_TN380_2020-07/Ship_Data/Water%20Sampling/Endurance-13_TN380_Discrete_Summary.csv'
+```
+
+Use `httr::GET` to send our request and return a response object. Note the very crafty username and password (guest, guest).
+
+```{r}
+req <- GET(url, authenticate("guest", "guest"))
+```
+
+Request objects are essentially augmented R lists.
+
+```{r}
+str(req)
+```
+
+We can look at the object by just printing it, get the headers with `headers()` and most useful, get the content or body of the request with `content()`.
+
+```{r}
+req
+headers(req)
+content(req)
+```
+
+Store the csv content in a data frame, select a cast and plot a profile! R is not a fan of verbose column names with spaces and punctuation, so we have to rename before plotting.
+
+```{r}
+df <- content(req)
+head(df)
+df %>% 
+  filter(Cruise == "TN380",
+         Station == "CE06",
+         Cast == 1) %>% 
+  rename(niskin = "Niskin/Bottle Position", chl = "Discrete Chlorophyll [ug/L]") %>% 
+  ggplot(aes(niskin, chl)) +
+  geom_point() +
+  coord_flip()
+```
+
